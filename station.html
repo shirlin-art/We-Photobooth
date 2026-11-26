@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Print Station</title>
+<style>
+  :root{--accent:#c98f86;--ink:#3a2e2a;--bg:#faf5ef}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #eadfd3;padding:10px 14px}
+  h1{margin:0 0 6px;font-size:20px}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .pill{background:#f4ebe1;border-radius:999px;padding:6px 12px;font-size:14px}
+  button,select{font:inherit;border-radius:12px;border:2px solid var(--accent);background:#fff;color:var(--ink);padding:8px 14px;cursor:pointer}
+  button.main{background:var(--accent);color:#fff;font-weight:700}
+  button.on{background:#2e7d4f;border-color:#2e7d4f;color:#fff;font-weight:700}
+  button:disabled{opacity:.45;cursor:default}
+  #msg{padding:14px;text-align:center;opacity:.8}
+  #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:12px 14px 90px}
+  .card{position:relative;background:#fff;border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,.1);overflow:hidden}
+  .card img{display:block;width:100%;aspect-ratio:2/3;object-fit:cover;background:#eee}
+  .card .bar{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;font-size:13px}
+  .card button{padding:5px 10px;font-size:13px}
+  .badge{position:absolute;top:8px;left:8px;background:#2e7d4f;color:#fff;border-radius:999px;font-size:12px;font-weight:700;padding:3px 9px}
+  .badge.q{background:#d98a1f}
+  details{margin:10px 14px;background:#fff;border-radius:14px;padding:10px 14px;font-size:14px;line-height:1.5}
+  summary{font-weight:700;cursor:pointer}
+  code{background:#f4ebe1;padding:2px 6px;border-radius:6px;word-break:break-all;display:inline-block}
+  #printArea{display:none}
+  @media print{
+    html,body{background:#fff}
+    body>*:not(#printArea){display:none!important}
+    #printArea{display:block!important;position:fixed;inset:0;background:#fff}
+    #printArea img{width:100%;height:100%;object-fit:contain;display:block}
+  }
+</style>
+<style id="pageStyle">@page{size:4in 6in;margin:0}</style>
+</head>
+<body>
+<header>
+  <h1 id="title">🖨 Print Station</h1>
+  <div class="row">
+    <button id="auto">Auto-print: OFF</button>
+    <select id="paper" aria-label="Paper size">
+      <option value="4x6">4 × 6 in</option>
+      <option value="5x7">5 × 7 in</option>
+      <option value="6x8">6 × 8 in</option>
+      <option value="a6">A6</option>
+    </select>
+    <select id="copies" aria-label="Copies"><option value="1">1 copy</option><option value="2">2 copies</option><option value="3">3 copies</option></select>
+    <button id="printNew" class="main" disabled>Print new (0)</button>
+    <span class="pill" id="status">Starting…</span>
+  </div>
+</header>
+
+<details>
+  <summary>How to print without the print window popping up every time</summary>
+  <p><b>Windows</b> (Chrome or Edge): set your printer as the default printer. Right-click the browser shortcut, choose Properties, and add <code>--kiosk-printing</code> at the end of the Target box, after a space. Close all browser windows, open the browser from that shortcut, then open this page.</p>
+  <p><b>Mac</b> (Terminal): <code>open -a "Google Chrome" --args --kiosk-printing</code> after fully quitting Chrome. Set your printer as the default in System Settings → Printers.</p>
+  <p>Then turn <b>Auto-print</b> on. Each new collage prints by itself. Phones and tablets can't print silently, so tap Print on each photo.</p>
+  <p>Keep this page open on the laptop, plugged in, and the screen awake. Photos can take 10–60 seconds to show up after a guest taps Done.</p>
+</details>
+
+<div id="msg">Loading photos…</div>
+<div id="grid"></div>
+<div id="printArea"><img id="printImg" alt=""></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const q = new URLSearchParams(location.search);
+const cn = q.get("cn")||"", tg = q.get("tg")||"wedding-photobooth";
+const names = [q.get("b"), q.get("g")].filter(Boolean).join(" & ");
+if(names) $("#title").textContent = "🖨 Print Station · " + names;
+if(q.get("c") && /^#[0-9a-f]{6}$/i.test(q.get("c"))) document.documentElement.style.setProperty("--accent", q.get("c"));
+const PAPER = {"4x6":["4in","6in"],"5x7":["5in","7in"],"6x8":["6in","8in"],"a6":["105mm","148mm"]};
+const LS = "pbstation:"+cn+":"+tg;
+let st = {printed:{}, auto:false, base:null, paper:q.get("p")||"4x6", copies:1};
+try{ Object.assign(st, JSON.parse(localStorage.getItem(LS)||"{}")); }catch(e){}
+if(!PAPER[st.paper]) st.paper="4x6";
+const save = () => { try{ localStorage.setItem(LS, JSON.stringify(st)); }catch(e){} };
+
+let items = [], queue = [], busy = false;
+const url = (it,w) => `https://res.cloudinary.com/${encodeURIComponent(cn)}/image/upload/c_limit,w_${w},q_auto/v${it.version}/${it.public_id}.${it.format}`;
+const fullUrl = it => url(it,1800);
+
+function setPaper(){
+  const [w,h] = PAPER[st.paper]; $("#pageStyle").textContent = `@page{size:${w} ${h};margin:0}`;
+  $("#paper").value = st.paper; $("#copies").value = String(st.copies);
+}
+$("#paper").onchange = e => { st.paper=e.target.value; setPaper(); save(); };
+$("#copies").onchange = e => { st.copies=+e.target.value; save(); };
+
+function render(){
+  const grid = $("#grid"); grid.innerHTML = "";
+  items.forEach(it=>{
+    const d = document.createElement("div"); d.className = "card";
+    const img = document.createElement("img"); img.loading="lazy"; img.alt=""; img.src = url(it,400);
+    const b = document.createElement("div"); b.className = "bar";
+    const n = st.printed[it.public_id]||0, pending = queue.includes(it.public_id);
+    const lab = document.createElement("span"); lab.textContent = new Date(it.created_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+    const btn = document.createElement("button"); btn.textContent = n ? "Print again" : "Print";
+    btn.onclick = () => enqueue(it.public_id, true);
+    b.append(lab, btn); d.append(img, b);
+    if(pending){ const t=document.createElement("div"); t.className="badge q"; t.textContent="In queue"; d.append(t); }
+    else if(n){ const t=document.createElement("div"); t.className="badge"; t.textContent="Printed ✓"+(n>1?" ×"+n:""); d.append(t); }
+    grid.append(d);
+  });
+  const fresh = items.filter(i=>!st.printed[i.public_id] && !queue.includes(i.public_id));
+  $("#printNew").textContent = "Print new ("+fresh.length+")"; $("#printNew").disabled = !fresh.length;
+  $("#auto").textContent = "Auto-print: " + (st.auto ? "ON" : "OFF"); $("#auto").className = st.auto ? "on" : "";
+}
+
+function enqueue(id, force){
+  if(queue.includes(id)) return; if(!force && st.printed[id]) return;
+  queue.push(id); render(); pump();
+}
+async function printOne(it){
+  const img = $("#printImg");
+  await new Promise(res=>{ img.onload = res; img.onerror = res; img.src = fullUrl(it); });
+  await new Promise(r=>setTimeout(r,250));
+  await new Promise(res=>{
+    let done=false; const fin=()=>{ if(done) return; done=true; window.removeEventListener("afterprint",fin); res(); };
+    window.addEventListener("afterprint", fin); setTimeout(fin, 20000);
+    try{ window.print(); }catch(e){ fin(); }
+  });
+}
+async function pump(){
+  if(busy) return; busy = true;
+  while(queue.length){
+    const id = queue[0], it = items.find(x=>x.public_id===id);
+    if(it){
+      for(let c=0;c<st.copies;c++){
+        $("#status").textContent = "Printing… ("+queue.length+" waiting)";
+        await printOne(it); await new Promise(r=>setTimeout(r,1200));
+      }
+      st.printed[id] = (st.printed[id]||0) + st.copies; save();
+    }
+    queue.shift(); render();
+  }
+  busy = false; showStatus();
+}
+function showStatus(){ $("#status").textContent = items.length+" photos · updated "+new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"}); }
+
+$("#printNew").onclick = () => items.filter(i=>!st.printed[i.public_id]).reverse().forEach(i=>enqueue(i.public_id));
+$("#auto").onclick = () => {
+  st.auto = !st.auto;
+  if(st.auto){ st.base = st.base || {}; items.forEach(i=>{ if(!st.printed[i.public_id]) st.base[i.public_id]=1; }); }   // only photos taken from now on
+  save(); render(); if(st.auto) keepAwake();
+};
+
+async function poll(){
+  if(!cn){ $("#msg").textContent = "This link is missing the cloud name. Open the print station from the host settings in the photobooth."; return; }
+  try{
+    const r = await fetch(`https://res.cloudinary.com/${encodeURIComponent(cn)}/image/list/${encodeURIComponent(tg)}.json?_=${Date.now()}`);
+    if(r.status===404){ items=[]; $("#msg").textContent="No photos yet. They appear here after a guest taps Done."; $("#msg").hidden=false; render(); showStatus(); return; }
+    if(!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    items = (j.resources||[]).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+    $("#msg").hidden = items.length>0; if(!items.length) $("#msg").textContent="No photos yet.";
+    if(st.auto) items.slice().reverse().forEach(i=>{ if(!st.printed[i.public_id] && !(st.base&&st.base[i.public_id])) enqueue(i.public_id); });
+    render(); if(!busy) showStatus();
+  }catch(e){ $("#status").textContent = "Can't reach the album ("+String(e.message||e).slice(0,30)+"). Retrying…"; }
+}
+async function keepAwake(){ try{ if(navigator.wakeLock) await navigator.wakeLock.request("screen"); }catch(e){} }
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && st.auto) keepAwake(); });
+
+setPaper(); render(); poll(); setInterval(poll, 12000); if(st.auto) keepAwake();
+</script>
+</body>
+</html>
