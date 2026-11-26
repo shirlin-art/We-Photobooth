@@ -1037,6 +1037,7 @@ async function loadAlbum(){
   const grid=$("#albumGrid"), msg=$("#albumMsg"); grid.innerHTML=""; msg.hidden=false; msg.textContent="Loading photos…";
   try{
     const r=await fetch(cld(`list/${encodeURIComponent(cfg.tg)}.json`)+"?_="+Date.now());
+    if(r.status===404){ msg.innerHTML="No photos in the album yet. 📸<br><small>Take a photo and tap Done, then refresh with ↻. (If you already did and this stays empty, check the cloud name and album name in the host settings.)</small>"; return; }
     if(!r.ok) throw new Error(r.status);
     const j=await r.json(), items=(j.resources||[]).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
     if(!items.length){ msg.textContent="No photos yet. Be the first to take one! 📸"; return; }
@@ -1047,7 +1048,7 @@ async function loadAlbum(){
       img.onclick=()=>openBig(path); grid.append(img);
     });
   }catch(e){
-    msg.innerHTML="Couldn't load the album.<br><small>Host: in Cloudinary Settings → Security, make sure “Resource list” is NOT restricted, and check the cloud name and album name.</small>";
+    msg.innerHTML="Couldn't load the album ("+String(e.message||e).slice(0,40)+").<br><small>Host: check the cloud name and album name in the host settings, and that “Resource list” is NOT ticked in Cloudinary Settings → Security.</small>";
   }
 }
 function openBig(path){
