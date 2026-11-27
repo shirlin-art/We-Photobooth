@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "demo-wedding",
+  "name": "Demo Wedding",
+  "category": "wedding",
+  "frame": {
+    "bg": "#fbf6ef",
+    "ink": "#6b4f45",
+    "accent": "#b8935a",
+    "slot": "#ffffff",
+    "deco": "double",
+    "nameFont": "600 {s}px \"Playfair Display\", serif",
+    "nameSize": 120,
+    "upper": false,
+    "r": 0
+  }
+}
