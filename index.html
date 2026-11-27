@@ -1718,9 +1718,28 @@ const EMOJI_SETS = {
   "⚽ Fun": ["🎯","🎮","🕹️","🎲","🧩","🎨","🎼","🏖️","⛱️","🚗","✈️","🚀","🛸","⛺","🛼","🏄","⚽","🏀","🎾","🥇","🏆","🎳","🚲","🛵","🚤","⛵","🚁","🎢","🏰","🗼","🗽","🎠","🌃","🌉","🎇","🪁","🛹","🏓","⛳","🥊"],
   "✨ Sparkle": ["✨","💫","⭐","🌟","💥","🔥","🌈","🎇","🎆","☄️","🪩","💎","🔮","🧿","🌠","❄️","⚡","💡","💦","🫧","🌀","🎐","🪬","🎑","🧚","🧜‍♀️","🦋","👼","🪽","🎠"]
 };
+EMOJI_SETS["🎂 Birthday"]=["🎂","🧁","🎈","🎉","🎊","🎁","🥳","🎀","🕯️","🍰","🍭","🍬","🎠","🧸","👑","🪅","🎆","🎇","🎵","🍩","🥂","🍾","🎤","🦄","🌈","⭐","💖","🎡","🪩","📸"];
+EMOJI_SETS["🏢 Office"]=["💼","📊","📈","🏆","🥇","🚀","💡","🎯","🤝","👔","💻","📱","📣","🎤","🏅","🎓","☕","🍕","🥂","🎉","👏","🙌","✅","⭐","🌟","💪","🧠","📸","🎈","🪩","🏢","🌍"];
 const GLYPHS = ["♥","♡","★","☆","✦","✧","❀","✿","❁","❃","✺","✹","❋","☘","♪","♫","☺","❣","❦","☾","☼","✌","➳","✂","♛","♬","❖","✪","✱","✲","❂","☀","⚘","❥","✽","✾","✤","❈","♔","⚜"];
 const BCOLORS = [["#b8935a","#ffffff"],["#c98f86","#ffffff"],["#ffffff","#b8935a"],["#1f2a44","#f3e6c8"],["#f6d9d6","#7a4a4a"],["#dfe7d9","#4a5a47"],["#4a3a35","#ffffff"],["#e0457b","#ffffff"],["#111111","#ff9a2e"],["#ffffff","#222222"]];
 const BADGE_TEXT = ["Mr & Mrs","Just Married","I do!","She said YES!","Cheers!","Team Bride","Team Groom","Bride Tribe","Groomsmen","Forever ♥","Happily Ever After","Best Day Ever","Party Time!","Love Wins","Selfie Time","Mr","Mrs","Squad Goals","Kiss kiss!","Wedding Day","Save the Date","Bride to be","Groom to be","Mrs Right","Mr Right","Tipsy Time","Dance Floor","Kampai!","Yum Seng!","Together Forever","Love Story","Aww ♥","Hello 2027","Family First","Besties","Cousins","Girls Night","Boys Club","Photo Booth","Smile!"];
+const BADGES_BY = {
+  birthday:["Happy Birthday!","Birthday Girl","Birthday Boy","Make a wish","Another year older","Cake time!","Party Time!","Cheers!","Best Day Ever","Birthday Vibes","Let's party","Level up","Blow the candles","Selfie Time","Squad Goals","Besties","Family First","Girls Night","Boys Club","Photo Booth","Smile!","Sweet!","Wish granted","Yum Seng!"],
+  company:["Team Spirit","Dream Team","Teamwork","We did it!","Great Job","Winners","Success!","Celebrate","Thank you!","Cheers!","Work Hard Party Hard","Good vibes","Awesome","Colleagues","Office Fam","Squad Goals","Selfie Time","Photo Booth","Smile!","Dance Floor","Kampai!","Yum Seng!"],
+  party:["Party Time!","Cheers!","Selfie Time","Squad Goals","Besties","Good Vibes","Dance Floor","Kampai!","Yum Seng!","Girls Night","Boys Club","Photo Booth","Smile!","Let's party","Fun Times","Epic!","Family First","Cousins"]
+};
+const SEALS_BY = {
+  birthday:[["HAPPY","#f3c64a","#4a3a35"],["BIRTHDAY","#e0457b","#fff"],["PARTY","#7b5cd6","#fff"],["MAKE A WISH","#1f2a44","#f3e6c8"],["CAKE","#f6a38a","#fff"],["CHEERS","#2e9a8a","#fff"],["YAY!","#fff","#e0457b"],["BEST DAY","#8aa081","#fff"]],
+  company:[["TEAM","#1f2a44","#fff"],["WINNERS","#f3c64a","#4a3a35"],["CHEERS","#2e9a8a","#fff"],["THANKS","#fff","#1f2a44"],["GREAT JOB","#e0457b","#fff"],["CELEBRATE","#7b5cd6","#fff"],["SUCCESS","#8aa081","#fff"],["HAPPY","#f3c64a","#4a3a35"]],
+  party:[["PARTY","#e0457b","#fff"],["CHEERS","#2e9a8a","#fff"],["FUN","#f3c64a","#4a3a35"],["YAY!","#7b5cd6","#fff"],["GOOD VIBES","#1f2a44","#f3e6c8"],["HAPPY","#fff","#e0457b"],["LET'S GO","#f6a38a","#fff"],["BEST DAY","#8aa081","#fff"]]
+};
+const CATS_BY = {
+  birthday:["🎂 Birthday","🎉 Party","😎 Faces","🕶 Props","🍰 Food","🐾 Animals","⚽ Fun","✨ Sparkle","🎞 Camera","🌿 Nature"],
+  company:["🏢 Office","🎉 Party","😎 Faces","🕶 Props","🍰 Food","⚽ Fun","✨ Sparkle","🎞 Camera"],
+  party:["🎉 Party","😎 Faces","🕶 Props","🍰 Food","⚽ Fun","✨ Sparkle","🎞 Camera","🐾 Animals","🌿 Nature"]
+};
+/* stickers follow the event type chosen in the host settings */
+const stBadges = () => BADGES_BY[cfg.ev] || BADGE_TEXT, stSeals = () => SEALS_BY[cfg.ev] || SEALS, stCats = () => CATS_BY[cfg.ev] || Object.keys(EMOJI_SETS).filter(k=>!(k in {"🎂 Birthday":1,"🏢 Office":1}));
 const RETRO_LABELS = ["● REC","▶ PLAY","AUTO","ISO 400","SD 1/999","FLASH ⚡","36 EXP","DAY 1","PHOTO","SELFIE","00:00:12","LOW BATT","MEMORY","VHS","HD","MENU"];
 const TAPES = ["#f7b2c3","#ffd98a","#a8dcc3","#a9cdf2","#d9b8f0","#f6a38a","#ffffff","#c9b79c"];
 const SEALS = [["FOREVER","#c98f86","#fff"],["I DO","#b8935a","#fff"],["LOVE","#e0457b","#fff"],["XOXO","#1f2a44","#f3e6c8"],["MR & MRS","#fff","#b8935a"],["JUST MARRIED","#4a3a35","#fff"],["BEST DAY","#8aa081","#fff"],["HAPPY","#f3c64a","#4a3a35"]];
@@ -2278,16 +2297,19 @@ function renderTabs(){
   const body=$("#tabBody"), keep=body.scrollTop; body.innerHTML="";
   if(state.tab==="stickers"){
     const cats=document.createElement("div"); cats.className="cats";
-    ["✍ Names","🏷 Labels","🎀 Tape & seals","✦ Shapes",...Object.keys(EMOJI_SETS)].forEach(k=>{ const b=document.createElement("button"); b.textContent=k; b.className=k===state.cat?"on":""; b.onclick=()=>{state.cat=k; renderTabs();}; cats.append(b); });
+    if(!["✍ Names","🏷 Labels","🎀 Tape & seals","✦ Shapes",...stCats()].includes(state.cat)) state.cat="✍ Names";
+    ["✍ Names","🏷 Labels","🎀 Tape & seals","✦ Shapes",...stCats()].forEach(k=>{ const b=document.createElement("button"); b.textContent=k; b.className=k===state.cat?"on":""; b.onclick=()=>{state.cat=k; renderTabs();}; cats.append(b); });
     body.append(cats);
     const badgeRow=(items,fn,cls)=>{ const bd=document.createElement("div"); bd.className="badges"; items.forEach((it,i)=>{ const b=document.createElement("button"); fn(b,it,i); bd.append(b); }); return bd; };
     if(state.cat==="✍ Names"){
       const nm=names(), dt=fmtDate().replace(/ · /g,"."), st=stampText();
       const items=[
         ["script",nm],["badge",nm],["script",cfg.b||nm],["script",cfg.g||nm],
-        ["badge",dt],["script",dt],["stamp",st],["badge",nm+" ♥ "+dt],
+        ["badge",dt],["script",dt],["stamp",st],["badge",nm+(cfg.ev==="company"?" · ":" ♥ ")+dt],
         ...(cfg.t?[["script",cfg.t],["badge",cfg.t]]:[]),
         ...(cfg.ev==="wedding"||!cfg.ev ? [["badge","Mr & Mrs "+(cfg.g||"")],["badge","The "+(cfg.g||"")+" Wedding"],["badge","Save the Date"],["badge",fmtDate()],["script","Forever & Always"],["script","Happily Ever After"]]
+          : cfg.ev==="birthday" ? [["script","Happy Birthday "+(cfg.b||"")],["badge",(cfg.b?cfg.b+"'s Birthday":"Happy Birthday")],["badge","Make a wish"],["script","Another year older"],["badge",fmtDate()]]
+          : cfg.ev==="company" ? [["badge",fmtDate()],["badge","Team Spirit"],["script","Thank you!"],["script","Great night"]]
           : [["badge",fmtDate()],["badge","Cheers!"],["badge","Party Time!"],["script","Thank you!"],["script","Good times"]])
       ].filter(it=>it[1]&&it[1].trim());
       body.append(badgeRow(items,(b,[kind,t],i)=>{
@@ -2297,12 +2319,12 @@ function renderTabs(){
         else { b.style.background=bg; b.style.color=fg; b.style.boxShadow="0 0 0 2px "+fg+" inset, 0 1px 6px rgba(0,0,0,.2)"; b.onclick=()=>addObj({type:"badge",text:t,bg,fg}); }
       }));
     } else if(state.cat==="🏷 Labels"){
-      body.append(badgeRow(BADGE_TEXT,(b,t,i)=>{ const [bg,fg]=BCOLORS[i%BCOLORS.length]; b.textContent=t; b.style.background=bg; b.style.color=fg; b.style.boxShadow="0 0 0 2px "+fg+" inset, 0 1px 6px rgba(0,0,0,.2)"; b.onclick=()=>addObj({type:"badge",text:t,bg,fg}); }));
+      body.append(badgeRow(stBadges(),(b,t,i)=>{ const [bg,fg]=BCOLORS[i%BCOLORS.length]; b.textContent=t; b.style.background=bg; b.style.color=fg; b.style.boxShadow="0 0 0 2px "+fg+" inset, 0 1px 6px rgba(0,0,0,.2)"; b.onclick=()=>addObj({type:"badge",text:t,bg,fg}); }));
       const h=document.createElement("div"); h.className="ghead"; h.textContent="Retro camera labels"; body.append(h);
       body.append(badgeRow(RETRO_LABELS,(b,t,i)=>{ b.className="retro"; b.textContent=t; b.onclick=()=>addObj({type:"badge",text:t,bg:"#111111",fg:i%2?"#ffffff":"#ff9a2e",font:'64px VT323, monospace'}); }));
     } else if(state.cat==="🎀 Tape & seals"){
       body.append(badgeRow(TAPES,(b,col)=>{ b.className="tape"; b.textContent="tape"; b.style.background=col; b.onclick=()=>addObj({type:"tape",color:col}); }));
-      body.append(badgeRow(SEALS,(b,[t,bg,fg])=>{ b.className="seal"; b.textContent=t; b.style.background=bg; b.style.color=fg; b.style.boxShadow="0 0 0 3px "+fg+" inset"; b.onclick=()=>addObj({type:"seal",text:t,bg,fg}); }));
+      body.append(badgeRow(stSeals(),(b,[t,bg,fg])=>{ b.className="seal"; b.textContent=t; b.style.background=bg; b.style.color=fg; b.style.boxShadow="0 0 0 3px "+fg+" inset"; b.onclick=()=>addObj({type:"seal",text:t,bg,fg}); }));
     } else if(state.cat==="✦ Shapes"){
       const r3=document.createElement("div"); r3.className="row"; r3.style.margin="0 0 4px";
       TCOLORS.forEach(col=>{ const b=document.createElement("button"); b.className="sw"+(col===state.gcolor?" on":""); b.style.background=col; b.onclick=()=>{state.gcolor=col; renderTabs();}; r3.append(b); });
