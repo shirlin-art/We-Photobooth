@@ -1667,6 +1667,47 @@ const FRAMES = [
 ];
 const frameById = id => FRAMES.find(f=>f.id===id);
 const THEME = frameById("theme");
+let activeCustomThemeId = "";
+let activeCustomFrame = null;
+const THEME_FONTS = [
+  '600 {s}px "Playfair Display", serif',
+  '700 {s}px "Playfair Display", serif',
+  'italic 500 {s}px "Playfair Display", serif',
+  '600 {s}px Caveat, cursive',
+  '{s}px "Great Vibes", cursive',
+  '{s}px VT323, monospace',
+  '{s}px "Special Elite", monospace',
+  '700 {s}px Quicksand, sans-serif'
+];
+const THEME_DECOS = new Set(["double","sparkle","flowers","hearts","clouds","stripes","vintage","ccd","ccdw","film","proof","polaroid","strip"]);
+function isThemeHex(v){ return typeof v==="string" && /^#[0-9a-fA-F]{6}$/.test(v); }
+async function loadCustomTheme(id){
+  if(!/^[a-z0-9-]{1,48}$/.test(id)) throw new Error("Invalid theme ID");
+  const url=new URL("themes/"+id+".json",location.href);
+  if(url.origin!==location.origin) throw new Error("Theme must be same-origin");
+  const response=await fetch(url.href,{cache:"no-cache"});
+  if(!response.ok) throw new Error("Theme not found ("+response.status+")");
+  const data=await response.json(), f=data&&data.frame;
+  if(data.schemaVersion!==1 || data.id!==id || !f || typeof data.name!=="string" || !data.name.trim()) throw new Error("Invalid theme file");
+  if(!isThemeHex(f.bg) || !isThemeHex(f.ink) || !isThemeHex(f.accent) || !isThemeHex(f.slot)) throw new Error("Invalid theme colours");
+  if(!THEME_DECOS.has(f.deco)) throw new Error("Unsupported theme decoration");
+  const font=THEME_FONTS.includes(f.nameFont)?f.nameFont:THEME_FONTS[0];
+  const size=Number.isFinite(Number(f.nameSize))?Math.max(22,Math.min(200,Number(f.nameSize))):120;
+  const radius=Number.isFinite(Number(f.r))?Math.max(0,Math.min(40,Number(f.r))):0;
+  const custom=Object.assign({},THEME,{
+    id:"custom-"+id,cat:"custom",name:data.name.trim().slice(0,48),
+    bg:f.bg,ink:f.ink,accent:f.accent,slot:f.slot,deco:f.deco,
+    nameFont:font,nameSize:size,upper:f.upper===true,r:radius,fx:undefined
+  });
+  const old=FRAMES.findIndex(x=>x.id===custom.id);
+  if(old>=0) FRAMES.splice(old,1);
+  FRAMES.push(custom);
+  activeCustomThemeId=id;
+  activeCustomFrame=custom;
+  state.frame=custom;
+  baseDirty=true;
+  return custom;
+}
 function applyTheme(){
   const c=cfg.c, r=document.documentElement.style;
   r.setProperty("--rose",c); r.setProperty("--gold",mix(c,"#000000",.22));
@@ -2351,7 +2392,7 @@ function renderTabs(){
     TCOLORS.forEach(col=>{ const b=document.createElement("button"); b.className="sw"+(col===state.tcolor?" on":""); b.style.background=col; b.onclick=()=>{state.tcolor=col; if(state.editText){state.editText.color=col; redraw();} renderTabs();}; r3.append(b); });
     body.append(r1,r2,r3);
   } else if(state.tab==="frame"){
-    [["cam","📷 Camera styles"],["wed",EV().tab]].forEach(([k,title])=>{
+    [["cam","📷 Camera styles"],["wed",EV().tab],["custom","✨ Custom event theme"]].forEach(([k,title])=>{
       const h=document.createElement("div"); h.className="ghead"; h.textContent=title; body.append(h);
       const g=document.createElement("div"); g.className="frames";
       FRAMES.filter(f=>f.cat===k).forEach(f=>{ const b=document.createElement("button"); b.className="framechip"+(f===state.frame?" on":""); b.append(frameThumb(f), f.name);
@@ -2531,7 +2572,7 @@ function startEject(){
 }
 $("#againBtn").onclick = () => {
   state.layout=null; state.raw=[]; state.shots=[]; state.objs=[]; state.sel=null; state.editText=null; state.logoGone=false; lastUploadKey="";
-  state.filter="none"; state.frame=THEME; state.beauty={on:true,level:60}; show("sWelcome");
+  state.filter="none"; state.frame=activeCustomFrame||THEME; state.beauty={on:true,level:60}; show("sWelcome");
 };
 
 const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone;
@@ -2562,6 +2603,7 @@ $("#shareBtn").onclick = async () => {
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>b.closest(".modal").classList.remove("on"));
 function guestUrl(hash){
   const q=new URLSearchParams(); Object.keys(DEF).forEach(k=>{ if(cfg[k]!==DEF[k] || "bgdc".includes(k)&&k.length===1) q.set(k,cfg[k]); });
+  if(activeCustomThemeId) q.set("theme",activeCustomThemeId);
   return location.origin+location.pathname+"?"+q.toString()+(hash||"");
 }
 function stationUrl(){
@@ -2653,8 +2695,15 @@ $("#hInstall").onclick = async () => {
 if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost")) navigator.serviceWorker.register("sw.js").catch(()=>{});
 
 /* ================= start ================= */
-applyTheme();
-if(location.hash==="#album" && cloudOn()) openAlbum();
+(async function boot(){
+  const requestedTheme=new URLSearchParams(location.search).get("theme");
+  if(requestedTheme){
+    try{ await loadCustomTheme(requestedTheme); }
+    catch(e){ console.warn("Custom theme unavailable; using the standard theme.",e); }
+  }
+  applyTheme();
+  if(location.hash==="#album" && cloudOn()) openAlbum();
+})();
 </script>
 </body>
 </html>
